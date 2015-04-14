@@ -9,6 +9,7 @@ module Application
 import Foundation
 import Settings
 import Handler.Root
+import Handler.About
 
 import Random
 import WordList

@@ -1,4 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -17,6 +18,7 @@ data App = App
 
 mkYesodData "App" [parseRoutes|
     / RootR GET
+    /about AboutR GET
 |]
 
 instance Yesod App
