@@ -3,6 +3,8 @@
 module Main where
 
 import Application
+import Settings
+
 import WordList
 
 import Test.Hspec
@@ -18,21 +20,30 @@ spec :: Spec
 spec = withApp $ do
     describe "getting passphrases" $ do
         it "returns random passphrases" $ do
-            get "/" `shouldRespondWith` "meter space siva saxon\n"
-            get "/" `shouldRespondWith` "dingy mg grass bake\n"
-            get "/" `shouldRespondWith` "conway owens stead hydro\n"
-            get "/" `shouldRespondWith` "glide break faro shear\n"
+            get "/" `shouldRespondWith` "yarn sib 300 model\n"
+            get "/" `shouldRespondWith` "lossy flour piotr caruso\n"
+            get "/" `shouldRespondWith` "hark sp quay hook\n"
+            get "/" `shouldRespondWith` "slant walk pogo twin\n"
 
         it "accepts a size parameter" $ do
-            get "/?size=3" `shouldRespondWith` "meter space siva\n"
+            get "/?size=3" `shouldRespondWith` "yarn sib 300\n"
 
 withApp :: SpecWith Application -> Spec
 withApp = before $ do
     setStdGen $ mkStdGen 1
 
-    let appDefaultSize = 4
-        appRandomInts size =
-            take (size * snd keyRange) . randomRs keyRange <$> newStdGen
+    Right wordlist <- readWordList "wordlist"
 
-    -- toWaiAppPlain avoids logging middleware for quieter specs
-    toWaiAppPlain $ App{..}
+    let settings = AppSettings
+            { appDefaultSize = 4
+            , appRandomApiKey = ""
+            , appRandomRequestSize = 20
+            , appWordList = wordlist
+            }
+
+    foundation <- makeFoundation settings $ do
+        ints <- randomRs keyRange <$> newStdGen
+
+        return $ Right $ take (appRandomRequestSize settings) ints
+
+    toWaiAppPlain foundation

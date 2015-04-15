@@ -5,46 +5,68 @@ module Random
     ) where
 
 import Data.Aeson
+import Data.Aeson.Encode.Pretty
+import Data.Bifunctor
+import Data.ByteString.Lazy (ByteString)
 import Data.Text (Text)
 import Network.Connection (TLSSettings(..))
 import Network.HTTP.Conduit
 
-newtype RPCRandom = RPCRandom [Int]
+import qualified Data.Text as T
+import qualified Data.ByteString.Lazy.Char8 as BL
 
-instance FromJSON RPCRandom where
-    parseJSON = withObject "random" $ \o -> RPCRandom
+newtype Random = Random { randomData :: [Int] }
+
+instance FromJSON Random where
+    parseJSON = withObject "random" $ \o -> Random
         <$> (o .: "result" >>= (.: "random") >>= (.: "data"))
 
-requestInts :: Text -> Int -> Int -> Int -> IO [Int]
-requestInts apiKey size lower upper = do
+requestInts :: Text -> Int -> (Int, Int) -> IO (Either Text [Int])
+requestInts apiKey size (lower, upper) = do
     response <- randomRPC $ object
-        [ "jsonrpc" .= apiVersion
-        , "id" .= requestId
-        , "method" .= apiMethod
-        , "params" .= object
-            [ "apiKey" .= apiKey
-            , "n" .= size
-            , "min" .= lower
-            , "max" .= upper
-            ]
+        [ "apiKey" .= apiKey
+        , "n" .= size
+        , "min" .= lower
+        , "max" .= upper
         ]
 
-    case response of
-        Left err -> error $ "could not parse API response " ++ err
-        Right (RPCRandom ints) -> return ints
+    return $ randomData <$> response
 
-randomRPC :: FromJSON a => Value -> IO (Either String a)
-randomRPC reqObject = do
+randomRPC :: FromJSON a => Value -> IO (Either Text a)
+randomRPC params = do
     request <- parseUrl apiUrl
+    response <- withManagerSettings settings $ httpLbs request
+        { requestBody = RequestBodyLBS $ encode $ object
+            [ "jsonrpc" .= apiVersion
+            , "id" .= requestId
+            , "method" .= apiMethod
+            , "params" .= params
+            ]
+        }
 
-    eitherDecode . responseBody <$> withManagerSettings settings
-        (httpLbs request { requestBody = RequestBodyLBS $ encode reqObject })
+    return $ first (formatError response) $
+        eitherDecode $ responseBody response
 
   where
     settings = mkManagerSettings
         -- TODO: www.random.org's cert has no Common Name, I can do nothing
-        -- except be insecure and disable verification.
+        -- except be insecure and disable verification until I fork/fix
+        -- https://github.com/vincenthz/hs-tls/issues/100
         (TLSSettingsSimple True False False) Nothing
+
+    formatError :: Response ByteString -> String -> Text
+    formatError resp err = T.pack $ unlines
+        [ "Unable to access random.org"
+        , "Status: " ++ show (responseStatus resp)
+        , "Response: "
+        , "---"
+        , BL.unpack $ formatBody $ responseBody resp
+        , "---"
+        , "Error: " ++ err
+        ]
+
+    formatBody :: ByteString -> ByteString
+    formatBody bs = maybe bs encodePretty (decode bs :: Maybe Value)
 
 apiUrl :: String
 apiUrl = "https://api.random.org/json-rpc/1/invoke"

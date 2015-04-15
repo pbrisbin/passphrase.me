@@ -1,74 +1,51 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Application
-    ( App(..)
+    ( makeFoundation
     , waiApp
-
-    -- Exported to silence unused warnings
-    , Widget
-    , resourcesApp
     ) where
+
+import Foundation
+import Settings
+import Handler.Root
 
 import Random
 import WordList
 
-import Data.Maybe (fromMaybe)
-import Data.Monoid ((<>))
+import Data.IORef
 import Data.Text (Text)
-import LoadEnv
-import System.Environment
+import Data.Tuple
 import Yesod.Core
-import Yesod.Form
 
-import qualified Data.Text as T
+import qualified Data.Traversable as T
 
-data App = App
-    { appDefaultSize :: Int
-    , appRandomInts :: (Int -> IO [Int])
-    }
+mkYesodDispatch "App" resourcesApp
 
-mkYesod "App" [parseRoutes|
-    / RootR GET
-|]
+makeFoundation :: AppSettings -> IO (Either Text [Int]) -> IO App
+makeFoundation settings refill = do
+    ref <- newIORef []
 
-instance Yesod App
+    return $ App settings $ \size -> do
+        ints <- atomicModifyIORef ref $ swap . splitAt size
 
--- Required for intField (error messages)
-instance RenderMessage App FormMessage where
-    renderMessage _ _ = defaultFormMessage
+        if length ints >= size
+            then return $ Right ints
+            else do
+                result <- refill
 
-getRootR :: Handler Text
-getRootR = do
-    App{..} <- getYesod
-
-    ints <- liftIO . appRandomInts
-        =<< getField intField "size" appDefaultSize
-
-    return $ buildPassphrase ints <> "\n"
-
-  where
-    getField field name value =
-        fromMaybe value <$> runInputGet (iopt field name)
-
-buildPassphrase :: [Int] -> Text
-buildPassphrase = T.unwords . map getWord . fromStream
+                T.forM result $ \ints' -> do
+                    let (first, rest) = splitAt size ints'
+                    writeIORef ref rest
+                    return first
 
 waiApp :: IO Application
 waiApp = do
-    loadEnv
+    settings <- loadAppSettings
+    foundation <- makeFoundation settings $
+        requestInts
+            (appRandomApiKey settings)
+            (appRandomRequestSize settings)
+            keyRange
 
-    apiKey <- T.pack <$> getEnv "RANDOM_API_KEY"
-    appDefaultSize <- read <$> getEnv "PASSPHRASE_SIZE"
-
-    let appRandomInts size =
-            -- Request integers from random.org
-            requestInts apiKey (size * upper) lower upper
-
-    toWaiApp $ App{..}
-
-  where
-    (lower, upper) = keyRange
+    toWaiApp $ foundation

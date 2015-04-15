@@ -7,16 +7,22 @@ build-type:             Simple
 
 library
     hs-source-dirs:     src
-    exposed-modules:    Random
+    exposed-modules:    Application
+                      , Settings
                       , WordList
-                      , Application
+    other-modules:      Foundation
+                      , Random
+                      , Handler.Root
     build-depends:      base >= 4 && < 5
                       , aeson
+                      , aeson-pretty
                       , bytestring
                       , connection
                       , containers
                       , http-conduit
+                      , http-types
                       , load-env
+                      , parsec
                       , text
                       , yesod-core
                       , yesod-form
