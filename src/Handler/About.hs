@@ -78,18 +78,27 @@ getAboutR = defaultLayout $ do
         <h2>Is it safe to use this site?
 
         <p>
-            <strong>Not right now
+            Assuming you trust SSL, yes.
 
         <p>
-            See 
-            <a href="https://github.com/vincenthz/hs-tls/issues/100">vincenthz/hs-tls#100
-            . Because of this issue, our communication with random.org is
-            currently vulnerable, as the only workaround is to not verify their
-            SSL certificate.
+            Aside from the word list itself, everything else (the random
+            numbers, the generated passphrases) is stored only in memory and
+            sent directly and only to you over an SSL connection.
 
         <p>
-            Assuming this bug is eventually fixed, this site will become safe to
-            use provided you access it over SSL (assuming you trust SSL in
-            general).
+            If in doubt, please vet the 
+            <a href="https://github.com/pbrisbin/passphrase.me">source code
+            yourself.
 
+        <h2>
+            Doesn't
+            <code>mkpasswd(1)
+            do this?
+
+        <p>
+            Yes, but it generates gibberish pass<em>words</em>. This is meant to
+            generate secure, but memorable pass<em>phrases</em>.
+
+        <small>
+            <a href="mailto:pbrisbin@gmail.com">Contact
         |]

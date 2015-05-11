@@ -27,6 +27,7 @@ library
                       , text
                       , yesod-core
                       , yesod-form
+                      , x509-validation >= 1.5.2
     ghc-options:        -Wall
 
 executable passphrase-me

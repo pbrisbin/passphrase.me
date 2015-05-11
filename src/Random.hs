@@ -9,7 +9,6 @@ import Data.Aeson.Encode.Pretty
 import Data.Bifunctor
 import Data.ByteString.Lazy (ByteString)
 import Data.Text (Text)
-import Network.Connection (TLSSettings(..))
 import Network.HTTP.Conduit
 
 import qualified Data.Text as T
@@ -35,7 +34,7 @@ requestInts apiKey size (lower, upper) = do
 randomRPC :: FromJSON a => Value -> IO (Either Text a)
 randomRPC params = do
     request <- parseUrl apiUrl
-    response <- withManagerSettings settings $ httpLbs request
+    response <- withManager $ httpLbs request
         { requestBody = RequestBodyLBS $ encode $ object
             [ "jsonrpc" .= apiVersion
             , "id" .= requestId
@@ -48,12 +47,6 @@ randomRPC params = do
         eitherDecode $ responseBody response
 
   where
-    settings = mkManagerSettings
-        -- TODO: www.random.org's cert has no Common Name, I can do nothing
-        -- except be insecure and disable verification until I fork/fix
-        -- https://github.com/vincenthz/hs-tls/issues/100
-        (TLSSettingsSimple True False False) Nothing
-
     formatError :: Response ByteString -> String -> Text
     formatError resp err = T.pack $ unlines
         [ "Unable to access random.org"
