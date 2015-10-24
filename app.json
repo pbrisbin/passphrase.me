@@ -1,0 +1,4 @@
+{
+  "name": "passphrase-me",
+  "description": "This is required for heroku docker:release"
+}
