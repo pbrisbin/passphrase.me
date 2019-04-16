@@ -28,15 +28,17 @@ randomRPC params = do
     request <- buildRequest <$> parseUrlThrow apiUrl
     first show . responseBody <$> httpJSONEither request
   where
-    buildRequest = setRequestBodyJSON $ object
-        [ "jsonrpc" .= apiVersion
-        , "id" .= requestId
-        , "method" .= apiMethod
-        , "params" .= params
-        ]
+    buildRequest = setRequestMethod "POST" . setRequestBodyJSON
+        (object
+            [ "jsonrpc" .= apiVersion
+            , "id" .= requestId
+            , "method" .= apiMethod
+            , "params" .= params
+            ]
+        )
 
 apiUrl :: String
-apiUrl = "https://api.random.org/json-rpc/1/invoke"
+apiUrl = "https://api.random.org/json-rpc/2/invoke"
 
 apiVersion :: Text
 apiVersion = "2.0"
