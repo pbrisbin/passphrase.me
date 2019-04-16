@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module WordList
     ( Key
     , WordList
@@ -47,11 +48,10 @@ fromList ints
 fromStream :: [Int] -> [Key]
 fromStream [] = []
 fromStream ints = consKey $ fromStream rest
-
   where
     consKey = maybe id (:) $ fromList batch
 
-    (batch, rest) = splitAt (keyLength) $ filter (inRange keyRange) ints
+    (batch, rest) = splitAt keyLength $ filter (inRange keyRange) ints
 
 --------------------------------------------------------------------------------
 -- Reading a WordList from disk
@@ -68,12 +68,12 @@ parseWord = do
     _ <- tab
     v <- parseValue
 
-    return (k, v)
+    pure (k, v)
 
 parseKey :: Parser Key
 parseKey = do
     ints <- map digitToInt <$> replicateM 5 digit
-    maybe (fail $ "invalid key " ++ show ints) return $ fromList ints
+    maybe (fail $ "invalid key " ++ show ints) pure $ fromList ints
 
 parseValue :: Parser Text
 parseValue = T.pack <$> manyTill anyToken newline

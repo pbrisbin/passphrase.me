@@ -1,18 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
+
 module Random
     ( requestInts
     ) where
 
 import Data.Aeson
-import Data.Aeson.Encode.Pretty
 import Data.Bifunctor
-import Data.ByteString.Lazy (ByteString)
 import Data.Text (Text)
 import Network.HTTP.Conduit
-
-import qualified Data.Text as T
-import qualified Data.ByteString.Lazy.Char8 as BL
+import Network.HTTP.Simple
 
 newtype Random = Random { randomData :: [Int] }
 
@@ -20,46 +16,24 @@ instance FromJSON Random where
     parseJSON = withObject "random" $ \o -> Random
         <$> (o .: "result" >>= (.: "random") >>= (.: "data"))
 
-requestInts :: Text -> Int -> (Int, Int) -> IO (Either Text [Int])
+requestInts :: Text -> Int -> (Int, Int) -> IO (Either String [Int])
 requestInts apiKey size (lower, upper) = do
     response <- randomRPC $ object
-        [ "apiKey" .= apiKey
-        , "n" .= size
-        , "min" .= lower
-        , "max" .= upper
-        ]
+        ["apiKey" .= apiKey, "n" .= size, "min" .= lower, "max" .= upper]
 
-    return $ randomData <$> response
+    pure $ randomData <$> response
 
-randomRPC :: FromJSON a => Value -> IO (Either Text a)
+randomRPC :: FromJSON a => Value -> IO (Either String a)
 randomRPC params = do
-    request <- parseUrl apiUrl
-    response <- withManager $ httpLbs request
-        { requestBody = RequestBodyLBS $ encode $ object
-            [ "jsonrpc" .= apiVersion
-            , "id" .= requestId
-            , "method" .= apiMethod
-            , "params" .= params
-            ]
-        }
-
-    return $ first (formatError response) $
-        eitherDecode $ responseBody response
-
+    request <- buildRequest <$> parseUrlThrow apiUrl
+    first show . responseBody <$> httpJSONEither request
   where
-    formatError :: Response ByteString -> String -> Text
-    formatError resp err = T.pack $ unlines
-        [ "Unable to access random.org"
-        , "Status: " ++ show (responseStatus resp)
-        , "Response: "
-        , "---"
-        , BL.unpack $ formatBody $ responseBody resp
-        , "---"
-        , "Error: " ++ err
+    buildRequest = setRequestBodyJSON $ object
+        [ "jsonrpc" .= apiVersion
+        , "id" .= requestId
+        , "method" .= apiMethod
+        , "params" .= params
         ]
-
-    formatBody :: ByteString -> ByteString
-    formatBody bs = maybe bs encodePretty (decode bs :: Maybe Value)
 
 apiUrl :: String
 apiUrl = "https://api.random.org/json-rpc/1/invoke"

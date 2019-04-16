@@ -1,16 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
-module Main where
+
+module Main (main) where
 
 import Application
 import Settings
-
-import WordList
-
+import System.Random
 import Test.Hspec
 import Test.Hspec.Wai
-
-import System.Random
+import WordList
 import Yesod.Core
 
 main :: IO ()
@@ -20,13 +17,13 @@ spec :: Spec
 spec = withApp $ do
     describe "getting passphrases" $ do
         it "returns random passphrases" $ do
-            get "/" `shouldRespondWith` "yarn sib 300 model\n"
-            get "/" `shouldRespondWith` "lossy flour piotr caruso\n"
-            get "/" `shouldRespondWith` "hark sp quay hook\n"
-            get "/" `shouldRespondWith` "slant walk pogo twin\n"
+            get "/" `shouldRespondWith` "balk il climb stu\n"
+            get "/" `shouldRespondWith` "mask doria one spin\n"
+            get "/" `shouldRespondWith` "lobo hertz minor e'er\n"
+            get "/" `shouldRespondWith` "bulge franz sturm qr\n"
 
         it "accepts a size parameter" $ do
-            get "/?size=3" `shouldRespondWith` "yarn sib 300\n"
+            get "/?size=3" `shouldRespondWith` "balk il climb\n"
 
 withApp :: SpecWith Application -> Spec
 withApp = before $ do
@@ -34,7 +31,8 @@ withApp = before $ do
 
     Right wordlist <- readWordList "wordlist"
 
-    let settings = AppSettings
+    let
+        settings = AppSettings
             { appDefaultSize = 4
             , appRandomApiKey = ""
             , appRandomRequestSize = 20
@@ -44,6 +42,6 @@ withApp = before $ do
     foundation <- makeFoundation settings $ do
         ints <- randomRs keyRange <$> newStdGen
 
-        return $ Right $ take (appRandomRequestSize settings) ints
+        pure $ Right $ take (appRandomRequestSize settings) ints
 
     toWaiAppPlain foundation

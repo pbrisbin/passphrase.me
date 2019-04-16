@@ -1,43 +1,40 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TemplateHaskell #-}
-module Handler.Root where
 
-import Foundation
-import Settings
+module Handler.Root
+    ( getRootR
+    )
+where
 
-import WordList
-
+import Control.Monad.Logger
 import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
 import Data.Text (Text)
+import qualified Data.Text as T
+import Foundation
 import Network.HTTP.Types (status200, status500)
+import Settings
+import WordList
 import Yesod.Core
 import Yesod.Form
 
-import qualified Data.Text as T
-
 getRootR :: Handler Text
 getRootR = do
-    App{..} <- getYesod
-
-    size <- getField intField "size" $ appDefaultSize appSettings
-    result <- liftIO $ appGetRandomInts $ size * keyLength
-
-    logResult result
+    App {..} <- getYesod
 
     let choose k = getWord k $ appWordList appSettings
         passphrase ints = T.unwords (map choose $ fromStream ints) <> "\n"
 
-    either
-        (sendResponseStatus status500)
-        (sendResponseStatus status200 . passphrase)
-        result
+    size <- getField intField "size" $ appDefaultSize appSettings
+    result <- liftIO $ appGetRandomInts $ size * keyLength
 
-  where
-    getField field name value =
-        fromMaybe value <$> runInputGet (iopt field name)
+    case result of
+        Left err -> do
+            logErrorN $ T.pack err
+            sendResponseStatus status500 err
+        Right ints -> do
+            logDebugN $ "result=" <> T.pack (show ints)
+            sendResponseStatus status200 $ passphrase ints
 
-logResult :: Either Text a -> Handler ()
-logResult (Right _) = return ()
-logResult (Left err) = $(logError) err
+getField :: MonadHandler m => Field m a -> Text -> a -> m a
+getField field name value = fromMaybe value <$> runInputGet (iopt field name)

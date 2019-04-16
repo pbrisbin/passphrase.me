@@ -1,52 +1,47 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Application
     ( makeFoundation
     , waiApp
     ) where
 
-import Foundation
-import Settings
-import Handler.Root
-import Handler.About
-
-import Random
-import WordList
-
 import Data.IORef
-import Data.Text (Text)
-import Data.Tuple
-import Yesod.Core
-
 import qualified Data.Traversable as T
+import Data.Tuple
+import Foundation
+import Handler.About
+import Handler.Root
+import Random
+import Settings
+import WordList
+import Yesod.Core
 
 mkYesodDispatch "App" resourcesApp
 
-makeFoundation :: AppSettings -> IO (Either Text [Int]) -> IO App
+makeFoundation :: AppSettings -> IO (Either String [Int]) -> IO App
 makeFoundation settings refill = do
     ref <- newIORef []
 
-    return $ App settings $ \size -> do
+    pure $ App settings $ \size -> do
         ints <- atomicModifyIORef ref $ swap . splitAt size
 
         if length ints >= size
-            then return $ Right ints
+            then pure $ Right ints
             else do
                 result <- refill
 
                 T.forM result $ \ints' -> do
                     let (first, rest) = splitAt size ints'
                     writeIORef ref rest
-                    return first
+                    pure first
 
 waiApp :: IO Application
 waiApp = do
     settings <- loadAppSettings
-    foundation <- makeFoundation settings $
-        requestInts
-            (appRandomApiKey settings)
-            (appRandomRequestSize settings)
-            keyRange
-
-    toWaiApp $ foundation
+    foundation <- makeFoundation settings $ requestInts
+        (appRandomApiKey settings)
+        (appRandomRequestSize settings)
+        keyRange
+    toWaiApp foundation

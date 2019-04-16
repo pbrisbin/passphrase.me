@@ -1,9 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
-module Handler.About where
+
+module Handler.About
+    ( getAboutR
+    )
+where
 
 import Foundation
 import Yesod.Core
+
+-- brittany-disable-next-binding
 
 getAboutR :: Handler Html
 getAboutR = defaultLayout $ do
@@ -14,7 +20,7 @@ getAboutR = defaultLayout $ do
 
         <p>
             <code>curl
-            -able passphrases generated using entropy from 
+            -able passphrases generated using entropy from
             <a href="https://www.random.org">random.org
             .
 
@@ -31,26 +37,26 @@ getAboutR = defaultLayout $ do
 
         <ol>
             <li>
-                Request integers from 
+                Request integers from
                 <a href="https://www.random.org">random.org
                 , which uses things like atmospheric data to generate truly
                 random numbers
 
             <li>
-                Use those integers to look up words in 
+                Use those integers to look up words in
                 <a href="http://world.std.com/~reinhold/diceware.wordlist.asc">this list
-                using 
+                using
                 <a href="http://digitalcurrencyinstitute.org/how-to-create-super-secure-and-easily-memorable-passphrases/">this approach
 
             <li>
-                Return those words as a simple 
+                Return those words as a simple
                 <code>text/plain
                 response
 
         <h2>Are the passphrases strong?
 
         <p>
-            From the web page for 
+            From the web page for
             <a href="https://www.fourmilab.ch/javascrypt/pass_phrase.html">this other generator
             :
 
@@ -69,7 +75,7 @@ getAboutR = defaultLayout $ do
             getting ~51 bits.
 
         <p>
-            The inspirational 
+            The inspirational
             <a href="https://xkcd.com/936/">xkcd
             comic states it would take a computer 550 years to brute force a
             passphrase with <em>44</em> bits of entropy, so we're doing at least
@@ -86,7 +92,7 @@ getAboutR = defaultLayout $ do
             sent directly and only to you over an SSL connection.
 
         <p>
-            If in doubt, please vet the 
+            If in doubt, please vet the
             <a href="https://github.com/pbrisbin/passphrase.me">source code
             yourself.
 

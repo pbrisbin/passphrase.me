@@ -1,0 +1,50 @@
+name: passphrase-me
+version: 0.0.0
+license-file: LICENSE
+
+ghc-options: -Wall
+
+dependencies:
+  - base
+
+library:
+    source-dirs: src
+    dependencies:
+      - aeson
+      - aeson-pretty
+      - bytestring
+      - connection
+      - containers
+      - http-client-tls
+      - http-conduit
+      - http-types
+      - load-env
+      - monad-logger
+      - parsec
+      - text
+      - x509-validation >= 1.5.2
+      - yesod-core
+      - yesod-form
+
+executables:
+  passphrase-me:
+    main: main.hs
+    source-dirs: app
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - passphrase-me
+      - warp
+
+tests:
+ test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+      - hspec
+      - hspec-wai
+      - passphrase-me
+      - random
+      - yesod-core
