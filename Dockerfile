@@ -21,7 +21,7 @@ COPY LICENSE /src/
 RUN stack install
 
 # Runtime
-FROM ubuntu:18.04
+FROM fpco/stack-run:lts
 MAINTAINER Pat Brisbin <pbrisbin@gmail.com>
 
 ENV LANG en_US.UTF-8
