@@ -34,5 +34,7 @@ docker run --rm \
 ## Release
 
 ```console
-make release
+heroku container:login
+heroku container:push web --app passphrase-me
+heroku container:release web --app passphrase-me
 ```
