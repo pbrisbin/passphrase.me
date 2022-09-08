@@ -33,8 +33,4 @@ docker run --rm \
 
 ## Release
 
-```console
-heroku container:login
-heroku container:push web --app passphrase-me
-heroku container:release web --app passphrase-me
-```
+Push to `master`, Render will build and deploy.
