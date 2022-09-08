@@ -5,7 +5,7 @@
 [Details][].
 
 [random.org]: https://www.random.org
-[details]: https://passphrase-me.herokuapp.com/about
+[details]: https://passphrase-me.onrender.com/about
 
 ## Development
 
