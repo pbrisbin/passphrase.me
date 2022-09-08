@@ -27,10 +27,10 @@ getAboutR = defaultLayout $ do
         <h2>Usage
 
         <pre>
-            \% curl --silent https://passphrase-me.herokuapp.com/
+            \% curl --silent https://passphrase-me.onrender.com/
             \aries selma stamp mark
             \
-            \% curl --silent https://passphrase-me.herokuapp.com/?size=5
+            \% curl --silent https://passphrase-me.onrender.com/?size=5
             \qualm snap come molten embark
 
         <h2>How it works
